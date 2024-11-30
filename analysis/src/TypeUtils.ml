@@ -1164,7 +1164,8 @@ let rec fnTakesTypeAsFirstArg ~env ~full ~lastPath t =
            Therefore, we can safely pluck out just the last part of the `path`, but need to use the entire name of the current type
            we're comparing with.
         *)
-        Path.name p = lastPath || Path.name p = "t")
+        Printf.printf "Name = %s, lastPath = %s\n" (Path.last p) lastPath;
+        Path.last p = lastPath || Path.name p = "t")
     | _ -> false)
   | _ -> false
 
