@@ -1170,7 +1170,7 @@ let rec fnTakesTypeAsFirstArg ~env ~full ~fullPath:(fullPath: Path.t) t =
         *)
         if Debug.verbose () then
           Printf.printf "p = %s, fullPath = %s\n" (Path.name p) (Path.name fullPath);
-        Path.same p fullPath || Path.name p = "t")
+        Path.same p fullPath || (Path.name p = Path.last fullPath) || Path.name p = "t")
     | _ -> false)
   | _ -> false
 

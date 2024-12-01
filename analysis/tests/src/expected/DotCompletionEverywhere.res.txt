@@ -265,6 +265,17 @@ CPPipe pathFromEnv:DOMAPI found:true
 Path DOMAPI.
 Path HTMLButtonElement.
 [{
+    "label": "->HTMLButtonElement.checkValidity",
+    "kind": 12,
+    "tags": [],
+    "detail": "DOMAPI.htmlButtonElement => bool",
+    "documentation": null,
+    "sortText": "checkValidity",
+    "textEdit": {
+    "range": {"start": {"line": 85, "character": 9}, "end": {"line": 85, "character": 9}},
+    "newText": "->HTMLButtonElement.checkValidity"
+  }
+  }, {
     "label": "disabled",
     "kind": 5,
     "tags": [],
