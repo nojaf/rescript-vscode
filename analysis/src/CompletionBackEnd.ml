@@ -1149,7 +1149,7 @@ and getCompletionsForContextPath ~debug ~full ~opens ~rawOpens ~pos ~env ~exact
             in
             completions
             |> TypeUtils.filterPipeableFunctions ~synthetic:true ~env ~full
-                 ~lastPath:(Path.last tPath) ~replaceRange:fieldNameLoc)
+                 ~fullPath:tPath ~replaceRange:fieldNameLoc)
       | Some (ExtractedType _, _) ->
         if Debug.verbose () then
           Printf.printf
@@ -1173,10 +1173,10 @@ and getCompletionsForContextPath ~debug ~full ~opens ~rawOpens ~pos ~env ~exact
             completionPath
           |> TypeUtils.filterPipeableFunctions ~synthetic:true ~env ~full
                ~replaceRange:fieldNameLoc
-               ?lastPath:
+               ?fullPath:
                  (match TypeUtils.pathFromTypeExpr typ with
                  | None -> None
-                 | Some tPath -> Some (Path.last tPath)))
+                 | Some tPath -> Some tPath))
       | Some (ExtractedType _, _) ->
         if Debug.verbose () then
           Printf.printf
@@ -1283,11 +1283,7 @@ and getCompletionsForContextPath ~debug ~full ~opens ~rawOpens ~pos ~env ~exact
           completionsForPipeFromCompletionPath ~envCompletionIsMadeFrom ~opens
             ~pos ~scope ~debug ~prefix:funNamePrefix ~env ~rawOpens ~full
             completionPath
-          |> TypeUtils.filterPipeableFunctions ~env ~full
-               ?lastPath:
-                 (match tPath with
-                 | None -> None
-                 | Some tPath -> Some (Path.last tPath))
+          |> TypeUtils.filterPipeableFunctions ~env ~full ?fullPath: tPath
       in
       match completionPath with
       | Some completionPath -> (
@@ -1295,11 +1291,7 @@ and getCompletionsForContextPath ~debug ~full ~opens ~rawOpens ~pos ~env ~exact
           completionsForPipeFromCompletionPath ~envCompletionIsMadeFrom ~opens
             ~pos ~scope ~debug ~prefix:funNamePrefix ~env ~rawOpens ~full
             completionPath
-          |> TypeUtils.filterPipeableFunctions ~env ~full
-               ?lastPath:
-                 (match tPath with
-                 | None -> None
-                 | Some tPath -> Some (Path.last tPath))
+          |> TypeUtils.filterPipeableFunctions ~env ~full ?fullPath: tPath
         in
         let completions = completionsFromMainFn @ completionsFromExtraModule in
         (* We add React element functions to the completion if we're in a JSX context *)

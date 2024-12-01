@@ -1142,16 +1142,20 @@ let getExtraModuleToCompleteFromForType ~env ~full (t : Types.type_expr) =
 
 (** Checks whether the provided type represents a function that takes the provided path 
   as the first argument (meaning it's pipeable). *)
-let rec fnTakesTypeAsFirstArg ~env ~full ~lastPath t =
+let rec fnTakesTypeAsFirstArg ~env ~full ~fullPath:(fullPath: Path.t) t =
   match t.Types.desc with
   | Tlink t1
   | Tsubst t1
   | Tpoly (t1, [])
   | Tconstr (Pident {name = "function$"}, [t1; _], _) ->
-    fnTakesTypeAsFirstArg ~env ~full ~lastPath t1
+    fnTakesTypeAsFirstArg ~env ~full ~fullPath t1
   | Tarrow _ -> (
     match extractFunctionType ~env ~package:full.package t with
     | (Nolabel, t) :: _, _ -> (
+      (* TODO: t could be an alias inside another module, 
+         we need to map it back to the originally defined type before comparing paths, 
+         I don't know how to do this *)
+      let t = t in
       let p = pathFromTypeExpr t in
       match p with
       | None -> false
@@ -1164,8 +1168,9 @@ let rec fnTakesTypeAsFirstArg ~env ~full ~lastPath t =
            Therefore, we can safely pluck out just the last part of the `path`, but need to use the entire name of the current type
            we're comparing with.
         *)
-        Printf.printf "Name = %s, lastPath = %s\n" (Path.last p) lastPath;
-        Path.last p = lastPath || Path.name p = "t")
+        if Debug.verbose () then
+          Printf.printf "p = %s, fullPath = %s\n" (Path.name p) (Path.name fullPath);
+        Path.same p fullPath || Path.name p = "t")
     | _ -> false)
   | _ -> false
 
@@ -1186,15 +1191,15 @@ let transformCompletionToPipeCompletion ?(synthetic = false) ~env ~replaceRange
     }
 
 (** Filters out completions that are not pipeable from a list of completions. *)
-let filterPipeableFunctions ~env ~full ?synthetic ?lastPath ?replaceRange
+let filterPipeableFunctions ~env ~full ?synthetic ?fullPath: (fullPath: Path.t option) ?replaceRange
     completions =
-  match lastPath with
+  match fullPath with
   | None -> completions
-  | Some lastPath ->
+  | Some fullPath ->
     completions
     |> List.filter_map (fun (completion : Completion.t) ->
            match completion.kind with
-           | Value t when fnTakesTypeAsFirstArg ~env ~full ~lastPath t -> (
+           | Value t when fnTakesTypeAsFirstArg ~env ~full ~fullPath t -> (
              match replaceRange with
              | None -> Some completion
              | Some replaceRange ->
