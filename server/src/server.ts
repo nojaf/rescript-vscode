@@ -4,6 +4,8 @@ import * as v from "vscode-languageserver";
 import * as rpc from "vscode-jsonrpc/node";
 import * as path from "path";
 import fs from "fs";
+import * as semver from 'semver';
+
 // TODO: check DidChangeWatchedFilesNotification.
 import {
   DidOpenTextDocumentNotification,
@@ -1136,6 +1138,13 @@ function onMessage(msg: p.Message) {
           ?.snippetSupport
       );
 
+      const rescriptVersion =
+        initParams.workspaceFolders?.
+          map(folder => utils.findReScriptVersionForProjectRoot(fileURLToPath(folder.uri))).
+          find(version => version);
+
+      const selectionRangeProvider = (rescriptVersion && semver.gte(rescriptVersion, "12.0.0-alpha.12")) || false;
+
       // send the list of features we support
       let result: p.InitializeResult = {
         // This tells the client: "hey, we support the following operations".
@@ -1187,7 +1196,7 @@ function onMessage(msg: p.Message) {
                 retriggerCharacters: ["=", ","],
               }
             : undefined,
-          selectionRangeProvider: true,
+          selectionRangeProvider,
         },
       };
       let response: p.ResponseMessage = {
