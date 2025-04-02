@@ -1036,6 +1036,25 @@ function openCompiledFile(msg: p.RequestMessage): p.Message {
   return response;
 }
 
+function selectionRange(msg: p.RequestMessage) {
+  // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_selectionRange
+  let params = msg.params as p.SelectionRangeParams;
+  let filePath = fileURLToPath(params.textDocument.uri);
+  let cursors = params.positions.flatMap((pos) => [ pos.line, pos.character ]);
+
+  let response = utils.runAnalysisCommand(
+    filePath,
+    [
+      "selectionRange",
+      filePath,
+      ...cursors,
+    ],
+    msg
+  );
+
+  return response;
+} 
+
 function onMessage(msg: p.Message) {
   if (p.Message.isNotification(msg)) {
     // notification message, aka the client ends it and doesn't want a reply
@@ -1168,6 +1187,7 @@ function onMessage(msg: p.Message) {
                 retriggerCharacters: ["=", ","],
               }
             : undefined,
+          selectionRangeProvider: true,
         },
       };
       let response: p.ResponseMessage = {
@@ -1267,6 +1287,8 @@ function onMessage(msg: p.Message) {
       if (extName === c.resExt) {
         send(signatureHelp(msg));
       }
+    } else if (msg.method === p.SelectionRangeRequest.method) {
+      send(selectionRange(msg));
     } else {
       let response: p.ResponseMessage = {
         jsonrpc: c.jsonrpcVersion,
