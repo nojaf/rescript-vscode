@@ -8,7 +8,8 @@
 			"name": "Launch Client",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceRoot}"
+				"--extensionDevelopmentPath=${workspaceRoot}",
+				"--folder-uri=file:/Users/nojaf/Projects/daisy"
 			],
 			"outFiles": [
 				"${workspaceRoot}/client/out/**/*.js"

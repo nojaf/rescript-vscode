@@ -16,6 +16,7 @@ import {
 } from "vscode";
 
 import {
+  Executable,
   LanguageClient,
   LanguageClientOptions,
   ServerOptions,
@@ -97,6 +98,15 @@ export function activate(context: ExtensionContext) {
     // If the extension is launched in debug mode then the debug server options are used
     // Otherwise the run options are used
     let serverOptions: ServerOptions = {
+      command: "/Users/nojaf/Projects/rescript/_build/default/analysis/bin/main.exe",
+      args: ["lsp"],
+      options: {
+        cwd: "/Users/nojaf/Projects/daisy",
+      },
+      transport: TransportKind.stdio,
+    } as Executable;
+    /*
+    {
       run: {
         module: serverModule,
         args: ["--node-ipc"],
@@ -109,6 +119,7 @@ export function activate(context: ExtensionContext) {
         options: debugOptions,
       },
     };
+    */
 
     // Options to control the language client
     let clientOptions: LanguageClientOptions = {
