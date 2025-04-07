@@ -16,6 +16,8 @@ import {
 } from "vscode";
 
 import {
+  DidChangeConfigurationParams,
+  DidChangeConfigurationNotification,
   Executable,
   LanguageClient,
   LanguageClientOptions,
@@ -98,7 +100,8 @@ export function activate(context: ExtensionContext) {
     // If the extension is launched in debug mode then the debug server options are used
     // Otherwise the run options are used
     let serverOptions: ServerOptions = {
-      command: "/Users/nojaf/Projects/rescript/_build/default/analysis/bin/main.exe",
+      command:
+        "/Users/nojaf/Projects/rescript/_build/default/analysis/bin/main.exe",
       args: ["lsp"],
       options: {
         cwd: "/Users/nojaf/Projects/daisy",
@@ -357,10 +360,17 @@ export function activate(context: ExtensionContext) {
       ) {
         commands.executeCommand("rescript-vscode.restart_language_server");
       } else {
+        outputChannel.appendLine(
+          "Sending 'workspace/didChangeConfiguration' notification to server"
+        );
         // Send a general message that configuration has updated. Clients
         // interested can then pull the new configuration as they see fit.
+        const configuration = workspace.getConfiguration("rescript.settings");
+        const params : DidChangeConfigurationParams = {
+          settings: configuration
+        };
         client
-          .sendNotification("workspace/didChangeConfiguration")
+          .sendNotification(DidChangeConfigurationNotification.method, params)
           .catch((err) => {
             window.showErrorMessage(String(err));
           });
