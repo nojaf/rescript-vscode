@@ -359,15 +359,15 @@ export function activate(context: ExtensionContext) {
         affectsConfiguration("rescript.settings.cache")
       ) {
         commands.executeCommand("rescript-vscode.restart_language_server");
-      } else {
+      } else if (affectsConfiguration("rescript.settings")) {
         outputChannel.appendLine(
           "Sending 'workspace/didChangeConfiguration' notification to server"
         );
         // Send a general message that configuration has updated. Clients
         // interested can then pull the new configuration as they see fit.
-        const configuration = workspace.getConfiguration("rescript.settings");
-        const params : DidChangeConfigurationParams = {
-          settings: configuration
+        const settings = workspace.getConfiguration("rescript.settings");
+        const params: DidChangeConfigurationParams = {
+          settings,
         };
         client
           .sendNotification(DidChangeConfigurationNotification.method, params)
