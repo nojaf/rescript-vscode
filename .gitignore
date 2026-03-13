@@ -6,3 +6,5 @@ node_modules
 
 # VSCode test downloads
 .vscode-test/
+
+.claude/settings.local.json

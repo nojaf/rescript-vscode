@@ -1,7 +1,5 @@
 {
   "printWidth": 80,
   "sortPackageJson": false,
-  "ignorePatterns": [
-    "client/src/extension.js"
-  ]
+  "ignorePatterns": ["client/src/extension.js"]
 }

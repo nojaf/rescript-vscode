@@ -19,7 +19,8 @@
       "Bash(bun x:*)",
       "Bash(bunx oxfmt:*)",
       "Bash(make checkformat:*)",
-      "Bash(make format:*)"
+      "Bash(make format:*)",
+      "Bash(gh run:*)"
     ]
   }
 }
