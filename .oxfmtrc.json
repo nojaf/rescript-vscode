@@ -2,10 +2,6 @@
   "printWidth": 80,
   "sortPackageJson": false,
   "ignorePatterns": [
-    "server/out",
-    "analysis/examples",
-    "analysis/reanalyze/examples",
-    "tools/tests",
-    ".history/"
+    "client/src/extension.js"
   ]
 }
