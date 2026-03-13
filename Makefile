@@ -1,9 +1,12 @@
 SHELL = /bin/bash
 
+fmt:
+	bunx oxfmt --write .
+
 format:
-	bunx prettier --write --experimental-cli .
+	bunx oxfmt --write .
 
 checkformat:
-	bunx prettier --check --experimental-cli .
+	bunx oxfmt --check .
 
 .PHONY: format checkformat

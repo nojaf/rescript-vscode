@@ -15,7 +15,11 @@
       "Bash(npm run:*)",
       "Bash(bun --version)",
       "Bash(bun install:*)",
-      "Bash(bun run:*)"
+      "Bash(bun run:*)",
+      "Bash(bun x:*)",
+      "Bash(bunx oxfmt:*)",
+      "Bash(make checkformat:*)",
+      "Bash(make format:*)"
     ]
   }
 }

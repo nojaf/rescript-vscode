@@ -89,11 +89,11 @@ The plugin activates on `.res` and `.resi` files.
 
 You'll find all ReScript specific settings under the scope `rescript.settings`.
 
-| Setting                  | Description                                                                                                                                                                                                                                                                           |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| LSP Command              | Command and arguments to start the ReScript LSP server. Example: `["bun", "--bun", "/path/to/rescript.js", "lsp"]`. If not set, the extension auto-resolves `rescript` from `node_modules` and runs it with `lsp`. Configure via `rescript.settings.lspCommand`.                      |
-| Initialization Options   | Additional initialization options passed to the ReScript LSP server as a JSON object (e.g. `{ "queue_debounce_ms": 50, "diagnostics_http": 12307 }`). Configure via `rescript.settings.initializationOptions`.                                                                       |
-| Compile Status Indicator | Shows compile status in the status bar (Compiling, Errors, Warnings, Success). Toggle via `rescript.settings.compileStatus.enable`. Clicking in Error/Warning modes focuses the Problems view.                                                                                        |
+| Setting                  | Description                                                                                                                                                                                                                                                      |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| LSP Command              | Command and arguments to start the ReScript LSP server. Example: `["bun", "--bun", "/path/to/rescript.js", "lsp"]`. If not set, the extension auto-resolves `rescript` from `node_modules` and runs it with `lsp`. Configure via `rescript.settings.lspCommand`. |
+| Initialization Options   | Additional initialization options passed to the ReScript LSP server as a JSON object (e.g. `{ "queue_debounce_ms": 50, "diagnostics_http": 12307 }`). Configure via `rescript.settings.initializationOptions`.                                                   |
+| Compile Status Indicator | Shows compile status in the status bar (Compiling, Errors, Warnings, Success). Toggle via `rescript.settings.compileStatus.enable`. Clicking in Error/Warning modes focuses the Problems view.                                                                   |
 
 **Default settings:**
 

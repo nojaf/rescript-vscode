@@ -167,9 +167,7 @@ export async function activate(context: ExtensionContext) {
         "statusBarItem.warningBackground",
       );
       compilationStatusBarItem.command = "rescript-vscode.showProblems";
-      const byProject = warnings.map(
-        (e) => `${e.project} (${e.warningCount})`,
-      );
+      const byProject = warnings.map((e) => `${e.project} (${e.warningCount})`);
       compilationStatusBarItem.tooltip = `Warnings: ${byProject.join(", ")}`;
       compilationStatusBarItem.show();
       return;

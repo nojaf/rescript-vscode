@@ -124,7 +124,7 @@
         "path": "./snippets.json"
       }
     ],
-"configuration": {
+    "configuration": {
       "type": "object",
       "title": "ReScript",
       "properties": {
@@ -195,7 +195,7 @@
     "@types/node": "^20.19.13",
     "@types/semver": "^7.7.0",
     "@types/vscode": "1.97.0",
-    "prettier": "^3.6.2",
+    "oxfmt": "^0.40.0",
     "typescript": "^5.8.3"
   },
   "dependencies": {
