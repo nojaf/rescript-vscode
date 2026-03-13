@@ -7,6 +7,7 @@ contributing.md
 .github/**
 node_modules/.bin
 client/node_modules
+client/src/**
 _opam
 _build
 Makefile

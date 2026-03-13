@@ -189,7 +189,7 @@
     "vscode:prepublish": "bun run clean && bun run bundle",
     "compile": "tsc -b",
     "watch": "tsc -b -w",
-    "bundle": "bun build client/src/extension.ts --bundle --external vscode --external oxc-parser --sourcemap --outfile client/out/extension.js --format cjs --target node --minify"
+    "bundle": "bun build client/src/extension.ts --bundle --external vscode --external oxc-parser --sourcemap --outdir client/out --format cjs --target node --minify"
   },
   "devDependencies": {
     "@types/node": "^20.19.13",

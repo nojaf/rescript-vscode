@@ -1,5 +1,5 @@
 .DS_Store
-out
+client/out
 node_modules
 
 *.tsbuildinfo
