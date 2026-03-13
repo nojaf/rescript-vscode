@@ -1,18 +1,12 @@
-import * as path from "path";
 import {
   workspace,
   ExtensionContext,
   commands,
-  languages,
   window,
   StatusBarAlignment,
   Uri,
   Range,
   Position,
-  CodeAction,
-  WorkspaceEdit,
-  CodeActionKind,
-  Diagnostic,
   ViewColumn,
 } from "vscode";
 import { ThemeColor } from "vscode";
@@ -22,113 +16,61 @@ import {
   LanguageClientOptions,
   ServerOptions,
   State,
-  TransportKind,
 } from "vscode-languageclient/node";
 
 import * as customCommands from "./commands";
-import {
-  DiagnosticsResultCodeActionsMap,
-  statusBarItem,
-} from "./commands/code_analysis";
-import { pasteAsRescriptJson } from "./commands/paste_as_rescript_json";
-import { pasteAsRescriptJsx } from "./commands/paste_as_rescript_jsx";
 import { findProjectRootOfFile } from "../../shared/src/projectRoots";
+import { findBinary } from "../../shared/src/findBinary";
 
 let client: LanguageClient;
 
-// let taskProvider = tasks.registerTaskProvider('Run ReScript build', {
-// 	provideTasks: () => {
-// 		// if (!rakePromise) {
-// 		// 	rakePromise = getRakeTasks();
-// 		// }
-// 		// return rakePromise;
-
-// 		// taskDefinition: TaskDefinition,
-// 		// scope: WorkspaceFolder | TaskScope.Global | TaskScope.Workspace,
-// 		// name: string,
-// 		// source: string,
-// 		// execution ?: ProcessExecution | ShellExecution | CustomExecution,
-// 		// problemMatchers ?: string | string[]
-// 		return [
-// 			new Task(
-// 				{
-// 					type: 'bsb',
-// 				},
-// 				TaskScope.Workspace,
-// 				// definition.task,
-// 				'build and watch',
-// 				'bsb',
-// 				new ShellExecution(
-// 					// `./node_modules/.bin/bsb -make-world -w`
-// 					`pwd`
-// 				),
-// 				"Hello"
-// 			)
-// 		]
-// 	},
-// 	resolveTask(_task: Task): Task | undefined {
-// 		// const task = _task.definition.task;
-// 		// // A Rake task consists of a task and an optional file as specified in RakeTaskDefinition
-// 		// // Make sure that this looks like a Rake task by checking that there is a task.
-// 		// if (task) {
-// 		// 	// resolveTask requires that the same definition object be used.
-// 		// 	const definition: RakeTaskDefinition = <any>_task.definition;
-// 		// 	return new Task(
-// 		// 		definition,
-// 		// 		definition.task,
-// 		// 		'rake',
-// 		// 		new vscode.ShellExecution(`rake ${definition.task}`)
-// 		// 	);
-// 		// }
-// 		return undefined;
-// 	}
-// });
-
-export function activate(context: ExtensionContext) {
+export async function activate(context: ExtensionContext) {
   let outputChannel = window.createOutputChannel(
     "ReScript Language Server",
     "rescript",
   );
 
-  function createLanguageClient() {
-    // The server is implemented in node
-    let serverModule = context.asAbsolutePath(
-      path.join("server", "out", "cli.js"),
-    );
-    // The debug options for the server
-    // --inspect=6009: runs the server in Node's Inspector mode so VS Code can attach to the server for debugging
-    let debugOptions = { execArgv: ["--nolazy", "--inspect=6009"] };
+  async function createLanguageClient(): Promise<LanguageClient | null> {
+    const lspCommandSetting = workspace
+      .getConfiguration("rescript.settings")
+      .get<string[]>("lspCommand");
 
-    // If the extension is launched in debug mode then the debug server options are used
-    // Otherwise the run options are used
-    let serverOptions: ServerOptions = {
-      run: {
-        module: serverModule,
-        args: ["--node-ipc"],
-        transport: TransportKind.ipc,
-      },
-      debug: {
-        module: serverModule,
-        args: ["--node-ipc"],
-        transport: TransportKind.ipc,
-        options: debugOptions,
-      },
+    let command: string;
+    let args: string[];
+
+    if (lspCommandSetting && lspCommandSetting.length > 0) {
+      command = lspCommandSetting[0];
+      args = lspCommandSetting.slice(1);
+    } else {
+      // Auto-resolve rescript from node_modules
+      const projectRoot = getProjectRoot();
+      const rescriptPath = await findBinary({
+        projectRootPath: projectRoot,
+        binary: "rescript",
+      });
+      if (!rescriptPath) {
+        window.showErrorMessage(
+          "Could not find rescript binary. Set rescript.settings.lspCommand in your workspace settings.",
+        );
+        return null;
+      }
+      command = rescriptPath;
+      args = ["lsp"];
+    }
+
+    const serverOptions: ServerOptions = {
+      command,
+      args,
     };
 
-    // Options to control the language client
-    let clientOptions: LanguageClientOptions = {
-      documentSelector: [{ scheme: "file", language: "rescript" }],
-      // We'll send the initial configuration in here, but this might be
-      // problematic because every consumer of the LS will need to mimic this.
-      // We'll leave it like this for now, but might be worth revisiting later on.
-      initializationOptions: {
-        extensionConfiguration: workspace.getConfiguration("rescript.settings"),
+    const userInitOptions = workspace
+      .getConfiguration("rescript.settings")
+      .get<object>("initializationOptions", {});
 
-        // Keep this in sync with the `extensionClientCapabilities` type in the
-        // server.
-        extensionClientCapabilities: {
-          supportsMarkdownLinks: true,
-        },
+    const clientOptions: LanguageClientOptions = {
+      documentSelector: [{ scheme: "file", language: "rescript" }],
+      initializationOptions: {
+        ...userInitOptions,
       },
       outputChannel,
       markdown: {
@@ -143,54 +85,27 @@ export function activate(context: ExtensionContext) {
       clientOptions,
     );
 
-    // This sets up a listener that, if we're in code analysis mode, triggers
-    // code analysis as the LS server reports that ReScript compilation has
-    // finished. This is needed because code analysis must wait until
-    // compilation has finished, and the most reliable source for that is the LS
-    // server, that already keeps track of when the compiler finishes in order to
-    // other provide fresh diagnostics.
-    context.subscriptions.push(
-      client.onDidChangeState(({ newState }) => {
-        if (newState === State.Running) {
-          context.subscriptions.push(
-            client.onNotification("rescript/compilationFinished", () => {
-              if (inCodeAnalysisState.active === true) {
-                customCommands.codeAnalysisWithReanalyze(
-                  diagnosticsCollection,
-                  diagnosticsResultCodeActions,
-                  outputChannel,
-                  codeAnalysisRunningStatusBarItem,
-                );
-              }
-            }),
-          );
-        }
-      }),
-    );
-
     return client;
   }
 
+  function getProjectRoot(): string | null {
+    const activeEditor = window.activeTextEditor;
+    if (activeEditor) {
+      return findProjectRootOfFile(activeEditor.document.uri.fsPath);
+    }
+    const folders = workspace.workspaceFolders;
+    if (folders && folders.length > 0) {
+      return folders[0].uri.fsPath;
+    }
+    return null;
+  }
+
   // Create the language client and start the client.
-  client = createLanguageClient();
-
-  // Create a custom diagnostics collection, for cases where we want to report
-  // diagnostics programatically from inside of the extension. The reason this
-  // is separate from the diagnostics provided by the LS server itself is that
-  // this should be possible to clear independently of the other diagnostics
-  // coming from the ReScript compiler.
-  let diagnosticsCollection = languages.createDiagnosticCollection("rescript");
-
-  // This map will hold code actions produced by the code analysis, in a
-  // format that's cheap to look up.
-  let diagnosticsResultCodeActions: DiagnosticsResultCodeActionsMap = new Map();
-  let codeAnalysisRunningStatusBarItem = window.createStatusBarItem(
-    StatusBarAlignment.Right,
-  );
-
-  let debugDumpStatusBarItem = window.createStatusBarItem(
-    StatusBarAlignment.Right,
-  );
+  const initialClient = await createLanguageClient();
+  if (!initialClient) {
+    return;
+  }
+  client = initialClient;
 
   let compilationStatusBarItem = window.createStatusBarItem(
     StatusBarAlignment.Right,
@@ -252,7 +167,9 @@ export function activate(context: ExtensionContext) {
         "statusBarItem.warningBackground",
       );
       compilationStatusBarItem.command = "rescript-vscode.showProblems";
-      const byProject = warnings.map((e) => `${e.project} (${e.warningCount})`);
+      const byProject = warnings.map(
+        (e) => `${e.project} (${e.warningCount})`,
+      );
       compilationStatusBarItem.tooltip = `Warnings: ${byProject.join(", ")}`;
       compilationStatusBarItem.show();
       return;
@@ -260,7 +177,6 @@ export function activate(context: ExtensionContext) {
 
     const successes = entries.filter((e) => e.status === "success");
     if (successes.length > 0) {
-      // Compact success display: project label plus a green check emoji
       compilationStatusBarItem.text = `$(check) ReScript: Ok`;
       compilationStatusBarItem.backgroundColor = undefined;
       compilationStatusBarItem.color = null;
@@ -306,72 +222,13 @@ export function activate(context: ExtensionContext) {
     }),
   );
 
-  let inCodeAnalysisState: {
-    active: boolean;
-    currentMonorepoRoot: string | null;
-  } = { active: false, currentMonorepoRoot: null };
-
-  // This code actions provider yields the code actions potentially extracted
-  // from the code analysis to the editor.
-  languages.registerCodeActionsProvider("rescript", {
-    async provideCodeActions(document, rangeOrSelection) {
-      let availableActions =
-        diagnosticsResultCodeActions.get(document.uri.fsPath) ?? [];
-
-      const allRemoveActionEdits = availableActions.filter(
-        ({ codeAction }) => codeAction.title === "Remove unused",
-      );
-
-      const actions: CodeAction[] = availableActions
-        .filter(
-          ({ range }) =>
-            range.contains(rangeOrSelection) || range.isEqual(rangeOrSelection),
-        )
-        .map(({ codeAction }) => codeAction);
-
-      if (allRemoveActionEdits.length > 0) {
-        const removeAllCodeAction = new CodeAction("Remove all unused in file");
-        const edit = new WorkspaceEdit();
-        allRemoveActionEdits.forEach((subEdit) => {
-          subEdit.codeAction.edit.entries().forEach(([uri, [textEdit]]) => {
-            edit.replace(uri, textEdit.range, textEdit.newText);
-          });
-        });
-        removeAllCodeAction.kind = CodeActionKind.RefactorRewrite;
-        removeAllCodeAction.edit = edit;
-        actions.push(removeAllCodeAction);
-      }
-
-      return actions;
-    },
-  });
-
   // Register custom commands
   commands.registerCommand("rescript-vscode.create_interface", () => {
     customCommands.createInterface(client);
   });
 
-  commands.registerCommand(
-    "rescript-vscode.clear_diagnostic",
-    (diagnostic: Diagnostic) => {
-      const editor = window.activeTextEditor;
-      if (!editor) {
-        return;
-      }
-
-      const document = editor.document;
-      const diagnostics = diagnosticsCollection.get(document.uri);
-      const newDiagnostics = diagnostics.filter((d) => d !== diagnostic);
-      diagnosticsCollection.set(document.uri, newDiagnostics);
-    },
-  );
-
   commands.registerCommand("rescript-vscode.open_compiled", () => {
     customCommands.openCompiled(client);
-  });
-
-  commands.registerCommand("rescript-vscode.debug-dump-start", () => {
-    customCommands.dumpDebug(context, debugDumpStatusBarItem);
   });
 
   commands.registerCommand("rescript-vscode.dump-server-state", async () => {
@@ -380,13 +237,11 @@ export function activate(context: ExtensionContext) {
         command: "rescript/dumpServerState",
       })) as { content: string };
 
-      // Create an unsaved document with the server state content
       const document = await workspace.openTextDocument({
         content: result.content,
         language: "json",
       });
 
-      // Show the document in the editor
       await window.showTextDocument(document, {
         viewColumn: ViewColumn.Beside,
         preview: false,
@@ -408,16 +263,12 @@ export function activate(context: ExtensionContext) {
     }
   });
 
-  commands.registerCommand("rescript-vscode.debug-dump-retrigger", () => {
-    customCommands.dumpDebugRetrigger();
-  });
-
   commands.registerCommand("rescript-vscode.paste_as_rescript_json", () => {
-    pasteAsRescriptJson();
+    customCommands.pasteAsRescriptJson();
   });
 
   commands.registerCommand("rescript-vscode.paste_as_rescript_jsx", () => {
-    pasteAsRescriptJsx();
+    customCommands.pasteAsRescriptJsx();
   });
 
   commands.registerCommand(
@@ -429,56 +280,6 @@ export function activate(context: ExtensionContext) {
           new Position(startLine, startCol),
         ),
       });
-    },
-  );
-
-  // Starts the code analysis mode.
-  commands.registerCommand("rescript-vscode.start_code_analysis", async () => {
-    inCodeAnalysisState.active = true;
-
-    codeAnalysisRunningStatusBarItem.command =
-      "rescript-vscode.stop_code_analysis";
-    codeAnalysisRunningStatusBarItem.show();
-    statusBarItem.setToStopText(codeAnalysisRunningStatusBarItem);
-
-    // Start code analysis and capture the monorepo root for server management
-    const monorepoRoot = await customCommands.codeAnalysisWithReanalyze(
-      diagnosticsCollection,
-      diagnosticsResultCodeActions,
-      outputChannel,
-      codeAnalysisRunningStatusBarItem,
-    );
-    inCodeAnalysisState.currentMonorepoRoot = monorepoRoot;
-  });
-
-  commands.registerCommand("rescript-vscode.stop_code_analysis", () => {
-    inCodeAnalysisState.active = false;
-
-    // Stop server if we started it for this project
-    customCommands.stopReanalyzeServer(
-      inCodeAnalysisState.currentMonorepoRoot,
-      outputChannel,
-    );
-    inCodeAnalysisState.currentMonorepoRoot = null;
-
-    diagnosticsCollection.clear();
-    diagnosticsResultCodeActions.clear();
-
-    codeAnalysisRunningStatusBarItem.hide();
-  });
-
-  // Show reanalyze server log
-  commands.registerCommand(
-    "rescript-vscode.show_reanalyze_server_log",
-    async () => {
-      let currentDocument = window.activeTextEditor?.document;
-      let projectRootPath: string | null = null;
-
-      if (currentDocument) {
-        projectRootPath = findProjectRootOfFile(currentDocument.uri.fsPath);
-      }
-
-      return await customCommands.showReanalyzeServerLog(projectRootPath);
     },
   );
 
@@ -511,32 +312,28 @@ export function activate(context: ExtensionContext) {
     }
   });
 
-  commands.registerCommand("rescript-vscode.restart_language_server", () => {
-    client.stop().then(() => {
-      client = createLanguageClient();
-      client.start();
-    });
-  });
+  commands.registerCommand(
+    "rescript-vscode.restart_language_server",
+    async () => {
+      await client.stop();
+      const newClient = await createLanguageClient();
+      if (newClient) {
+        client = newClient;
+        client.start();
+      }
+    },
+  );
 
   // Start the client. This will also launch the server
   client.start();
 
   // Restart the language client automatically when certain configuration
-  // changes. These are typically settings that affect the capabilities of the
-  // language client, and because of that requires a full restart.
+  // changes.
   context.subscriptions.push(
     workspace.onDidChangeConfiguration(({ affectsConfiguration }) => {
-      // Put any configuration that, when changed, requires a full restart of
-      // the server here. That will typically be any configuration that affects
-      // the capabilities declared by the server, since those cannot be updated
-      // on the fly, and require a full restart with new capabilities set when
-      // initializing.
       if (
-        affectsConfiguration("rescript.settings.inlayHints") ||
-        affectsConfiguration("rescript.settings.codeLens") ||
-        affectsConfiguration("rescript.settings.signatureHelp") ||
-        affectsConfiguration("rescript.settings.incrementalTypechecking") ||
-        affectsConfiguration("rescript.settings.cache")
+        affectsConfiguration("rescript.settings.lspCommand") ||
+        affectsConfiguration("rescript.settings.initializationOptions")
       ) {
         commands.executeCommand("rescript-vscode.restart_language_server");
       } else {
@@ -546,8 +343,6 @@ export function activate(context: ExtensionContext) {
             .get<boolean>("compileStatus.enable", true);
           refreshCompilationStatusItem();
         }
-        // Send a general message that configuration has updated. Clients
-        // interested can then pull the new configuration as they see fit.
         client
           .sendNotification("workspace/didChangeConfiguration")
           .catch((err) => {
@@ -559,9 +354,6 @@ export function activate(context: ExtensionContext) {
 }
 
 export function deactivate(): Thenable<void> | undefined {
-  // Stop all reanalyze servers we started
-  customCommands.stopAllReanalyzeServers();
-
   if (!client) {
     return undefined;
   }

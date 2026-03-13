@@ -14,9 +14,6 @@
       "path": "./client"
     },
     {
-      "path": "./server"
-    },
-    {
       "path": "./shared"
     }
   ]

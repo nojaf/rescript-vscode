@@ -66,18 +66,6 @@
         "icon": "$(output)"
       },
       {
-        "command": "rescript-vscode.start_code_analysis",
-        "title": "ReScript: Start Code Analyzer"
-      },
-      {
-        "command": "rescript-vscode.stop_code_analysis",
-        "title": "ReScript: Stop Code Analyzer"
-      },
-      {
-        "command": "rescript-vscode.show_reanalyze_server_log",
-        "title": "ReScript: Show Code Analyzer Server Log"
-      },
-      {
         "command": "rescript-vscode.restart_language_server",
         "title": "ReScript: Restart Language Server"
       },
@@ -92,10 +80,6 @@
           "light": "assets/switch-impl-intf-light.svg",
           "dark": "assets/switch-impl-intf-dark.svg"
         }
-      },
-      {
-        "command": "rescript-vscode.debug-dump-start",
-        "title": "DEBUG ReScript: Dump analysis info"
       },
       {
         "command": "rescript-vscode.dump-server-state",
@@ -140,113 +124,29 @@
         "path": "./snippets.json"
       }
     ],
-    "taskDefinitions_unused": [
-      {
-        "type": "bsb",
-        "required": [
-          "task"
-        ],
-        "properties": {
-          "task": {
-            "type": "string",
-            "description": "The bsb task"
-          }
-        }
-      }
-    ],
-    "configuration": {
+"configuration": {
       "type": "object",
       "title": "ReScript",
       "properties": {
-        "rescript.settings.askToStartBuild": {
-          "scope": "language-overridable",
-          "type": "boolean",
-          "default": true,
-          "description": "Whether you want the extension to prompt for autostarting a ReScript build if a project is opened with no build running."
-        },
-        "rescript.settings.inlayHints.enable": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable (experimental) inlay hints."
-        },
-        "rescript.settings.inlayHints.maxLength": {
-          "markdownDescription": "Maximum length of character for inlay hints. Set to null to have an unlimited length. Inlay hints that exceed the maximum length will not be shown.",
-          "default": 25,
-          "type": [
-            "null",
-            "integer"
-          ],
-          "minimum": 0
-        },
-        "rescript.settings.codeLens": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable (experimental) code lens for function definitions."
-        },
-        "rescript.settings.signatureHelp.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable signature help for function calls."
-        },
-        "rescript.settings.signatureHelp.forConstructorPayloads": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable signature help for variant constructor payloads."
-        },
-        "rescript.settings.incrementalTypechecking.enable": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable incremental type checking."
-        },
-        "rescript.settings.incrementalTypechecking.acrossFiles": {
-          "type": "boolean",
-          "default": false,
-          "description": "(beta/experimental) Enable incremental type checking across files, so that unsaved file A gets access to unsaved file B."
-        },
-        "rescript.settings.cache.projectConfig.enable": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable project config caching. Can speed up latency dramatically."
-        },
-        "rescript.settings.binaryPath": {
-          "type": [
-            "string",
-            "null"
-          ],
+        "rescript.settings.lspCommand": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
           "default": null,
-          "description": "Path to the directory where cross-platform ReScript binaries are. You can use it if you haven't or don't want to use the installed ReScript from node_modules in your project."
+          "scope": "resource",
+          "description": "Command and arguments to start the ReScript LSP server (e.g. [\"bun\", \"--bun\", \"/path/to/rescript.js\", \"lsp\"]). If not set, the extension will try to find rescript in node_modules and run it with 'lsp'."
         },
-        "rescript.settings.platformPath": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "default": null,
-          "description": "Path to the directory where platform-specific ReScript binaries are. You can use it if you haven't or don't want to use the installed ReScript from node_modules in your project."
-        },
-        "rescript.settings.runtimePath": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "default": null,
-          "description": "Optional path to the directory containing the @rescript/runtime package. Set this if your tooling is unable to automatically locate the package in your project."
+        "rescript.settings.initializationOptions": {
+          "type": "object",
+          "default": {},
+          "scope": "resource",
+          "description": "Additional initialization options passed to the ReScript LSP server (e.g. queue_debounce_ms, diagnostics_http)."
         },
         "rescript.settings.compileStatus.enable": {
           "type": "boolean",
           "default": true,
           "description": "Show compile status in the status bar (compiling/errors/warnings/success)."
-        },
-        "rescript.settings.logLevel": {
-          "type": "string",
-          "enum": [
-            "error",
-            "warn",
-            "info",
-            "log"
-          ],
-          "default": "info",
-          "description": "Verbosity of ReScript language server logs sent to the Output channel."
         }
       }
     },
@@ -285,15 +185,12 @@
     ]
   },
   "scripts": {
-    "clean": "rm -rf client/out server/out",
+    "clean": "rm -rf client/out",
     "vscode:prepublish": "npm run clean && npm run bundle",
-    "verify-package": "node scripts/verify-package.mjs",
     "compile": "tsc -b",
     "watch": "tsc -b -w",
-    "postinstall": "cd server && npm i && cd ../client && npm i && cd ../tools && npm i && cd ../tools/tests && npm i && cd ../../analysis/tests && npm i && cd ../reanalyze/examples/deadcode && npm i && cd ../termination && npm i",
-    "bundle-server": "esbuild server/src/cli.ts --bundle --sourcemap --outfile=server/out/cli.js --format=cjs --platform=node --loader:.node=file --minify",
-    "bundle-client": "esbuild client/src/extension.ts --bundle --external:vscode --external:oxc-parser --sourcemap --outfile=client/out/extension.js --format=cjs --platform=node --loader:.node=file --minify",
-    "bundle": "npm run bundle-server && npm run bundle-client"
+    "postinstall": "cd client && npm i",
+    "bundle": "esbuild client/src/extension.ts --bundle --external:vscode --external:oxc-parser --sourcemap --outfile=client/out/extension.js --format=cjs --platform=node --loader:.node=file --minify"
   },
   "devDependencies": {
     "@types/node": "^20.19.13",
