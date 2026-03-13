@@ -15,7 +15,7 @@ jobs:
     runs-on: macos-15
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -34,7 +34,7 @@ jobs:
       - name: Package Extension
         run: bunx vsce package --no-yarn -o rescript-vscode-${{ steps.vars.outputs.sha_short }}.vsix
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: rescript-vscode-${{ steps.vars.outputs.sha_short }}.vsix
           path: rescript-vscode-${{ steps.vars.outputs.sha_short }}.vsix
