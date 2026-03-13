@@ -12,7 +12,10 @@
       "Bash(ls /Users/nojaf/Projects/rescript-vscode/*.opam /Users/nojaf/Projects/rescript-vscode/dune-project /Users/nojaf/Projects/rescript-vscode/.ocamlformat /Users/nojaf/Projects/rescript-vscode/.ocamlformat-ignore)",
       "Bash(ls /Users/nojaf/Projects/rescript-vscode/.ocamlformat*)",
       "Bash(npx tsc:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(bun --version)",
+      "Bash(bun install:*)",
+      "Bash(bun run:*)"
     ]
   }
 }

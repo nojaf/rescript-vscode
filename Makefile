@@ -1,9 +1,9 @@
 SHELL = /bin/bash
 
 format:
-	npx prettier --write --experimental-cli .
+	bunx prettier --write --experimental-cli .
 
 checkformat:
-	npx prettier --check --experimental-cli .
+	bunx prettier --check --experimental-cli .
 
 .PHONY: format checkformat

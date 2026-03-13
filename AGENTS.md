@@ -19,8 +19,7 @@ This is an experimental branch of the ReScript VSCode extension. The built-in Ty
 
 The project uses:
 
-- **esbuild**: For bundling the TypeScript client
-- **npm**: For JavaScript/TypeScript dependencies
+- **bun**: For package management and bundling the TypeScript client
 - **TypeScript**: For type checking the client code
 
 ## Development Commands
@@ -28,26 +27,26 @@ The project uses:
 ### Initial Setup
 
 ```bash
-npm install                    # Install all dependencies including client
+bun install                    # Install all dependencies
 ```
 
 ### Building
 
 ```bash
-npm run compile               # Compile TypeScript
-npm run bundle                # Bundle for production (esbuild)
+bun run compile               # Compile TypeScript
+bun run bundle                # Bundle for production (bun build)
 ```
 
 ### Development
 
 ```bash
-npm run watch                 # Watch TypeScript compilation
+bun run watch                 # Watch TypeScript compilation
 ```
 
 ### Code Quality
 
 ```bash
-make format                   # Format JS/TS (prettier)
+make format                   # Format JS/TS (prettier via bunx)
 make checkformat              # Check formatting without modifying
 ```
 

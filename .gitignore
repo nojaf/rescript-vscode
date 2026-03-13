@@ -2,9 +2,6 @@
 out
 node_modules
 
-_opam/
-_build/
-
 *.tsbuildinfo
 
 # VSCode test downloads
