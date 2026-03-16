@@ -1,13 +1,13 @@
 {
   "name": "rescript-vscode",
   "displayName": "ReScript",
-  "description": "ReScript language support (official)",
+  "description": "ReScript language support (nojaf)",
   "author": "ReScript Team",
   "license": "MIT",
-  "version": "1.72.0",
+  "version": "1.80.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/rescript-lang/rescript-vscode"
+    "url": "https://github.com/nojaf/rescript-vscode"
   },
   "publisher": "chenglou92",
   "icon": "logo.png",

@@ -31,6 +31,16 @@ jobs:
           COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: echo "sha_short=${COMMIT_SHA:0:7}" >> $GITHUB_OUTPUT
 
+      - name: Patch version with commit SHA
+        run: |
+          BASE_VERSION=$(jq -r .version package.json)
+          MAJOR=$(echo "$BASE_VERSION" | cut -d. -f1)
+          MINOR=$(echo "$BASE_VERSION" | cut -d. -f2)
+          PATCH=${{ github.run_number }}
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          jq --arg v "$NEW_VERSION" '.version = $v' package.json > package.tmp && mv package.tmp package.json
+          echo "Version set to $NEW_VERSION (sha: ${{ steps.vars.outputs.sha_short }})"
+
       - name: Package Extension
         run: bunx vsce package --no-yarn -o rescript-vscode-${{ steps.vars.outputs.sha_short }}.vsix
 
