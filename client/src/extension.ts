@@ -61,6 +61,13 @@ export async function activate(context: ExtensionContext) {
     const serverOptions: ServerOptions = {
       command,
       args,
+      options: {
+        env: {
+          ...process.env,
+          OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:4707",
+          OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf",
+        },
+      },
     };
 
     const userInitOptions = workspace
